@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101b21" />
+    <meta name="description" content="Você acabou de entrar no grupo secreto dos armários da LIVE. O que será que apagaram?" />
+    <title>Armários da LIVE 🔒 — Conversa secreta</title>
+    <style>
+      :root {
+        --bg: #0b141a;
+        --header: #202c33;
+        --bubble: #202c33;
+        --mine: #005c4b;
+        --text: #e9edef;
+        --sub: #aebac1;
+        --line: #34434c;
+        --red: #f04444;
+        --green: #25d366;
+      }
+      * { box-sizing: border-box; }
+      html { height: 100%; background: var(--bg); }
+      body {
+        margin: 0; min-height: 100%; color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      button { font: inherit; cursor: pointer; }
+      button:focus-visible { outline: 3px solid #b4ffdb; outline-offset: 3px; }
+      .backdrop {
+        position: fixed; inset: 0;
+        background: radial-gradient(circle at 30% 0%, #293f3d 0%, transparent 42%),
+          radial-gradient(circle at 100% 85%, #351919 0%, transparent 40%), #080f12;
+      }
+      .app {
+        isolation: isolate; position: relative; display: flex; flex-direction: column;
+        margin: 0 auto; width: 100%; max-width: 480px; height: 100dvh;
+        background: var(--bg); overflow: hidden;
+      }
+      .brand-strip {
+        height: 4px; flex: none;
+        background: linear-gradient(90deg, var(--red) 0 56%, #fff 56% 70%, #111 70%);
+      }
+      header {
+        position: relative; z-index: 3; flex: none;
+        display: flex; align-items: center; gap: 10px;
+        background: var(--header); padding: 11px 14px;
+        min-height: 72px;
+        box-shadow: 0 2px 10px #0003;
+      }
+      .avatar {
+        flex: none; width: 45px; height: 45px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        background: #455a64; border: 2px solid #566b74;
+      }
+      .avatar svg { width: 28px; height: 28px; }
+      .heading { min-width: 0; flex: 1; }
+      .heading strong { display: block; font-size: 16.5px; font-weight: 650; letter-spacing: -.25px; }
+      .heading small { display: block; color: var(--sub); font-size: 12px; margin-top: 3px; }
+      .icon-button {
+        flex: none; border: 0; background: transparent; color: #ced7dc;
+        width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+      }
+      .icon-button:active { background: #ffffff16; }
+      .icon-button svg { width: 21px; height: 21px; }
+      .thread {
+        position: relative; flex: 1; overflow-y: auto; overscroll-behavior: contain;
+        padding: 18px 15px 24px; scrollbar-width: thin;
+        background-color: #0b141a;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cg fill='none' stroke='%23293b40' stroke-opacity='.27' stroke-width='1.1'%3E%3Cpath d='M26 17h20v33H26zM31 22h10v4H31zM30 45h12M117 111h25v39h-25zM124 122h11v4h-11zM121 142h17M122 18l6 6-6 6-6-6zM55 120l7-7 7 7-7 7zM78 36c0-11 19-11 19 0M76 36h23v18H76zM86 43h3v4h-3zM22 116a13 13 0 0 1 26 0v12H22zM31 114h7M147 70c7 0 10 5 10 11s-3 11-10 11-10-5-10-11 3-11 10-11z'/%3E%3C/g%3E%3C/svg%3E");
+      }
+      .day {
+        margin: 0 auto 17px; width: fit-content;
+        padding: 6px 12px; background: #18252c; border-radius: 9px;
+        color: #c4d0d5; box-shadow: 0 2px 5px #0002;
+        font-size: 11px; font-weight: 600; letter-spacing: .5px;
+      }
+      .system {
+        margin: 0 auto 17px; width: fit-content; max-width: 96%;
+        padding: 7px 12px; background: #15262d; border-radius: 8px;
+        color: #c3d3d9; text-align: center; font-size: 11.5px; line-height: 1.45;
+      }
+      .message {
+        width: fit-content; max-width: min(87%, 385px);
+        padding: 8px 10px 7px; margin: 0 0 9px;
+        border-radius: 3px 10px 10px 10px; background: var(--bubble);
+        box-shadow: 0 1px 2px #0004; line-height: 1.43;
+        font-size: 14.5px; overflow-wrap: anywhere;
+        animation: rise .28s ease-out both;
+      }
+      .message.me { margin-left: auto; background: var(--mine); border-radius: 10px 3px 10px 10px; }
+      .sender { display: block; font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+      .body-text { white-space: pre-wrap; }
+      .time { display: flex; align-items: center; justify-content: flex-end; gap: 3px; color: #a5b1b8; font-size: 10px; margin-top: 4px; }
+      .message.me .time { color: #a4c6bb; }
+      .ticks { color: #72c3ea; font-size: 13px; letter-spacing: -4px; padding-right: 3px; }
+      .deleted { display: flex; align-items: center; gap: 8px; color: #a6b1b8; font-style: italic; font-size: 13.5px; }
+      .deleted svg { width: 17px; height: 17px; flex: none; }
+      .typing {
+        display: none; width: max-content; align-items: center; gap: 5px;
+        padding: 13px 17px; background: var(--bubble); border-radius: 3px 12px 12px 12px;
+        margin: 0 0 10px; box-shadow: 0 1px 2px #0004;
+      }
+      .typing.show { display: flex; }
+      .typing span { width: 6px; height: 6px; border-radius: 50%; background: #97a8b0; animation: bounce 1s infinite; }
+      .typing span:nth-child(2) { animation-delay: .15s; }
+      .typing span:nth-child(3) { animation-delay: .3s; }
+      .controls {
+        position: relative; z-index: 2; flex: none; background: #101b21;
+        border-top: 1px solid #263940; padding: 11px 14px max(12px, env(safe-area-inset-bottom));
+      }
+      .instruction { font-size: 12px; text-align: center; color: var(--sub); margin: 0 0 8px; }
+      .choice-list { display: grid; gap: 8px; }
+      .choice {
+        width: 100%; border: 1px solid #3a6558; border-radius: 13px;
+        padding: 12px 14px; color: #e5f9f1; background: #16362c;
+        text-align: left; min-height: 46px; font-weight: 600; font-size: 14px;
+        transition: transform .12s ease, background .12s ease;
+      }
+      .choice:active { transform: scale(.985); background: #1e4c3d; }
+      .idle { display: flex; align-items: center; gap: 12px; color: #8fa5aa; font-size: 13px; }
+      .idle span { background: #202c33; padding: 11px 15px; border-radius: 28px; flex: 1; }
+      .idle svg { width: 22px; height: 22px; }
+      .offer {
+        border-radius: 14px; overflow: hidden; margin-top: 7px;
+        border: 1px solid #593634; background: #15191c;
+      }
+      .offer-top {
+        background: linear-gradient(130deg, #f14646, #9b1e26); padding: 14px 16px 11px;
+      }
+      .offer-kicker { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; color: #ffe4e4; }
+      .offer-price { color: white; font-size: clamp(33px, 9vw, 45px); font-weight: 950; letter-spacing: -2px; line-height: 1.05; margin: 6px 0 3px; }
+      .offer-sub { color: #fff5f5; font-size: 12px; font-weight: 600; }
+      .offer-bottom { padding: 13px 14px 15px; }
+      .offer-brand { font-weight: 850; font-size: 13.5px; letter-spacing: .3px; }
+      .offer-desc { color: #cbd2d6; font-size: 12.5px; line-height: 1.5; margin: 5px 0 13px; }
+      .offer-button { width: 100%; padding: 12px 13px; border: 0; border-radius: 9px; background: #f1f5f3; color: #15211c; font-weight: 800; font-size: 13.5px; }
+      .offer-disclaimer { margin-top: 9px; color: #9da9af; font-size: 10.5px; line-height: 1.45; }
+      .done-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+      .ghost { flex: 1; background: #182a2b; border: 1px solid #3a5756; color: #c5e5d8; padding: 10px 8px; border-radius: 9px; font-weight: 650; font-size: 12px; }
+      .overlay {
+        position: fixed; z-index: 10; inset: 0; background: #000b; display: none;
+        align-items: flex-end; justify-content: center; padding: 16px;
+      }
+      .overlay.open { display: flex; }
+      .sheet {
+        width: 100%; max-width: 450px; border-radius: 21px; padding: 25px 22px 22px;
+        background: #202c33; box-shadow: 0 20px 60px #000a;
+        animation: slideUp .25s ease-out;
+      }
+      .sheet-kicker { color: #fe7171; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; }
+      .sheet h2 { font-size: 24px; margin: 8px 0 9px; line-height: 1.15; }
+      .sheet p, .sheet li { font-size: 14px; color: #c9d4d8; line-height: 1.55; }
+      .sheet ol { padding-left: 23px; }
+      .sheet li { margin-bottom: 9px; }
+      .sheet button { background: #25d366; color: #08271b; border: 0; width: 100%; padding: 13px; border-radius: 10px; font-weight: 800; margin-top: 9px; }
+      .toast { position: fixed; z-index: 12; bottom: 90px; left: 50%; transform: translateX(-50%); background: #d8ffe8; color: #17392b; font-size: 13px; font-weight: 700; border-radius: 10px; padding: 10px 15px; box-shadow: 0 7px 20px #0008; white-space: nowrap; opacity: 0; transition: opacity .18s; pointer-events: none; }
+      .toast.show { opacity: 1; }
+      @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
+      @keyframes slideUp { from { transform: translateY(25px); opacity: .7; } to { transform: translateY(0); opacity: 1; } }
+      @media(min-width: 560px) {
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .app { height: min(890px, 94vh); border: 1px solid #355158; border-radius: 23px; box-shadow: 0 20px 100px #000c; }
+      }
+      @media(prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="backdrop" aria-hidden="true"></div>
+    <main class="app">
+      <div class="brand-strip"></div>
+      <header>
+        <div class="avatar" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none"><rect x="3" y="6" width="8" height="21" rx="1.5" stroke="white" stroke-width="1.7"/><rect x="12" y="6" width="8" height="21" rx="1.5" stroke="white" stroke-width="1.7"/><rect x="21" y="6" width="8" height="21" rx="1.5" stroke="white" stroke-width="1.7"/><circle cx="9" cy="17" r=".9" fill="white"/><circle cx="18" cy="17" r=".9" fill="white"/><circle cx="27" cy="17" r=".9" fill="white"/></svg>
+        </div>
+        <div class="heading"><strong>Armários da LIVE 🔒</strong><small>57 participantes · grupo secreto</small></div>
+        <button id="shareTop" class="icon-button" aria-label="Compartilhar conversa" title="Compartilhar conversa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.5 6.6-4m-6.6 9 6.6 3.9"/></svg>
+        </button>
+      </header>
+      <section class="thread" id="thread" aria-label="Conversa dos armários">
+        <div class="day">HOJE</div>
+        <div id="messages" aria-live="polite" aria-relevant="additions"></div>
+        <div id="typing" class="typing" aria-label="Alguém está digitando"><span></span><span></span><span></span></div>
+      </section>
+      <footer class="controls" id="controls">
+        <div class="idle"><span>O que será que apagaram?</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 19V5m-5 5 5-5 5 5"/></svg></div>
+      </footer>
+    </main>
+    <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="sheet">
+        <div class="sheet-kicker">POINT DO CAPACETE × LIVE</div>
+        <h2 id="sheetTitle">O segredo é real. A conversa, nem tanto. 🤫</h2>
+        <p>Esta é uma prévia interativa da campanha dos armários. Na versão oficial, a oferta será resgatada pelos alunos no Super App LIVE.</p>
+        <ol><li>Abra o <strong>Super App LIVE</strong> no seu celular.</li><li>Localize o benefício oficial da <strong>Point do Capacete</strong>.</li><li>Confira os produtos participantes e as condições de até 30% de desconto.</li></ol>
+        <p><small>O link direto de resgate será incluído após a confirmação com a LIVE. Nenhum cupom é emitido nesta prévia.</small></p>
+        <button id="closeSheet">Entendi 😎</button>
+      </div>
+    </div>
+    <div id="toast" class="toast" role="status"></div>
+    <script>
+      (() => {
+        const query = new URLSearchParams(location.search);
+        const raw = query.get('armario') || '27';
+        const locker = /^\d{1,3}$/.test(raw) && +raw >= 1 && +raw <= 57 ? String(+raw).padStart(2, '0') : '27';
+        const messages = document.getElementById('messages');
+        const thread = document.getElementById('thread');
+        const controls = document.getElementById('controls');
+        const typing = document.getElementById('typing');
+        const overlay = document.getElementById('overlay');
+        const toast = document.getElementById('toast');
+        const palette = { 'Armário 13': '#e5b872', 'Armário 08': '#78caff', [`Armário ${locker}`]: '#ff7777' };
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let run = 0;
+        let toastTimer;
+
+        const scrollEnd = () => { requestAnimationFrame(() => { thread.scrollTo({top: thread.scrollHeight, behavior: reduced ? 'auto' : 'smooth'}); }); };
+        const wait = ms => new Promise(resolve => setTimeout(resolve, reduced ? Math.min(100, ms) : ms));
+        const stamp = () => new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+
+        function note(text) {
+          const el = document.createElement('div'); el.className = 'system'; el.textContent = text;
+          messages.appendChild(el); scrollEnd();
+        }
+        function bubble(name, text, opts = {}) {
+          const el = document.createElement('div'); el.className = 'message' + (opts.me ? ' me' : '');
+          if (name && !opts.me) {
+            const sender = document.createElement('span'); sender.className = 'sender';
+            sender.style.color = palette[name] || '#bdadff'; sender.textContent = name;
+            el.appendChild(sender);
+          }
+          const body = document.createElement('div'); body.className = opts.deleted ? 'deleted' : 'body-text';
+          if (opts.deleted) {
+            const symbol = document.createElement('span'); symbol.textContent = '⊘'; symbol.style.fontSize = '20px'; body.appendChild(symbol);
+            const label = document.createElement('span'); label.textContent = 'Esta mensagem foi apagada.'; body.appendChild(label);
+          } else body.textContent = text;
+          el.appendChild(body);
+          const time = document.createElement('div'); time.className = 'time'; time.textContent = stamp();
+          if (opts.me) { const ticks = document.createElement('span'); ticks.className = 'ticks'; ticks.textContent = '✓✓'; time.appendChild(ticks); }
+          el.appendChild(time); messages.appendChild(el); scrollEnd(); return el;
+        }
+        function isCurrent(id) { return id === run; }
+        async function speak(id, name, text, pause = 560, opts = {}) {
+          if (!isCurrent(id)) return;
+          typing.classList.add('show'); scrollEnd(); await wait(pause);
+          if (!isCurrent(id)) return;
+          typing.classList.remove('show'); bubble(name, text, opts);
+          await wait(180);
+        }
+        function idle() { controls.innerHTML = '<div class="idle"><span>Alguém está digitando...</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 19V5m-5 5 5-5 5 5"/></svg></div>'; }
+        function choices(prompt, items) {
+          controls.innerHTML = '';
+          const tip = document.createElement('p'); tip.className = 'instruction'; tip.textContent = prompt; controls.appendChild(tip);
+          const list = document.createElement('div'); list.className = 'choice-list';
+          for (const {label, value} of items) {
+            const b = document.createElement('button'); b.className = 'choice'; b.textContent = label;
+            b.addEventListener('click', () => answer(label, value)); list.appendChild(b);
+          }
+          controls.appendChild(list);
+        }
+        async function start() {
+          const id = ++run; messages.replaceChildren(); idle(); typing.classList.remove('show');
+          note(`Você entrou no grupo pelo armário ${locker}.`);
+          await wait(430);
+          await speak(id, 'Armário 13', `O ${locker} apagou a mensagem. Ninguém viu, né?`, 780);
+          await speak(id, 'Armário 08', 'Quem foi que entrou aqui???', 730);
+          await speak(id, `Armário ${locker}`, `...o aluno do armário ${locker}.`, 900);
+          await speak(id, 'Armário 08', 'TU DEIXOU O QR NO ARMÁRIO DELE???', 970);
+          await speak(id, 'Armário 13', 'Pera. Ele tá lendo isso AGORA? 👀', 820);
+          await speak(id, `Armário ${locker}`, '💀', 730);
+          await speak(id, `Armário ${locker}`, '', 500, {deleted:true});
+          if (!isCurrent(id)) return;
+          choices('O grupo ficou em silêncio. Quer responder?', [
+            {label:'👀 O que vocês apagaram?', value:'secret'},
+            {label:'😂 Quero sair desse grupo', value:'leave'}
+          ]);
+        }
+        async function answer(label, value) {
+          const id = ++run; idle(); bubble('', label, {me:true}); await wait(300);
+          if (value === 'leave') {
+            await speak(id, 'Armário 13', 'Tarde demais. Agora você é administrador. 😂', 930);
+            await speak(id, 'Armário 08', 'Já que entrou, vai ter que ouvir o segredo.', 900);
+            await speak(id, `Armário ${locker}`, 'KKKKKK tá bom, vou falar.', 930);
+          } else {
+            await speak(id, 'Armário 08', `Eu avisei que o ${locker} era fofoqueiro.`, 800);
+            await speak(id, `Armário ${locker}`, 'Tá. Mas promete não espalhar pra academia inteira?', 950);
+            await speak(id, 'Armário 13', 'Ele vai espalhar.', 690);
+          }
+          await speak(id, `Armário ${locker}`, 'Pronto, falei. A Point tá dando até 30% de desconto pros alunos da LIVE pelo Super App. Se perguntarem, você não viu nada. 🤫', 1120);
+          if (!isCurrent(id)) return;
+          reveal();
+        }
+        function reveal() {
+          const wrap = document.createElement('div'); wrap.className = 'offer';
+          wrap.innerHTML = '<div class="offer-top"><div class="offer-kicker">SEGREDO DESBLOQUEADO 🔓</div><div class="offer-price">ATÉ 30% OFF</div><div class="offer-sub">Benefício para alunos LIVE</div></div><div class="offer-bottom"><div class="offer-brand">POINT DO CAPACETE × LIVE</div><div class="offer-desc">Seu benefício está no Super App LIVE. Confira os produtos participantes e as condições oficiais.</div><button class="offer-button" id="openBenefit">COMO RESGATAR O BENEFÍCIO ↗</button><div class="offer-disclaimer">Prévia demonstrativa. Não gera cupom ou desconto por si só.</div></div>';
+          messages.appendChild(wrap);
+          wrap.querySelector('#openBenefit').addEventListener('click', () => overlay.classList.add('open'));
+          const actions = document.createElement('div'); actions.className = 'done-actions';
+          const replay = document.createElement('button'); replay.className = 'ghost'; replay.textContent = '↻ Ver de novo'; replay.addEventListener('click', start);
+          const share = document.createElement('button'); share.className = 'ghost'; share.textContent = '↗ Compartilhar vazamento'; share.addEventListener('click', sharePage);
+          actions.append(replay, share); messages.appendChild(actions);
+          controls.innerHTML = '<div class="idle"><span>Armário 08 saiu do grupo. 🏃</span><span aria-hidden="true" style="flex:none;padding:8px;background:transparent">🔒</span></div>';
+          scrollEnd();
+        }
+        function showToast(text) { toast.textContent = text; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2700); }
+        async function sharePage() {
+          const data = {title:'Vazou o grupo dos armários da LIVE 👀', text:'Mano, olha o que eu achei dentro do armário KKKKK', url:location.href};
+          if (navigator.share) { try { await navigator.share(data); return; } catch (e) { if (e.name === 'AbortError') return; } }
+          try { await navigator.clipboard.writeText(location.href); showToast('Link copiado! 🔗'); } catch { showToast('Copie o endereço desta página.'); }
+        }
+        document.getElementById('shareTop').addEventListener('click', sharePage);
+        document.getElementById('closeSheet').addEventListener('click', () => overlay.classList.remove('open'));
+        overlay.addEventListener('click', e => { if(e.target === overlay) overlay.classList.remove('open'); });
+        document.addEventListener('keydown', e => { if(e.key === 'Escape') overlay.classList.remove('open'); });
+        start();
+      })();
+    </script>
+  </body>
+</html>
